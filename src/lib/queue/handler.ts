@@ -1,14 +1,15 @@
 /**
  * Default message handler — processes incoming WhatsApp messages.
  *
- * Currently: echo bot + DB storage.
- * Phase 2 will replace this with AI engine processing.
+ * Routes messages through the AI engine when OPENAI_API_KEY is set,
+ * falls back to echo bot otherwise.
  */
 
 import { db } from "@/lib/db";
 import { conversations, messages, customers } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getWhatsAppProvider } from "@/lib/whatsapp";
+import { processWithAI } from "@/lib/ai";
 import type { IncomingMessageJob } from "./index";
 
 /**
@@ -78,9 +79,9 @@ function contentToText(content: IncomingMessageJob["content"]): string {
     case "text":
       return content.body ?? "";
     case "image":
-      return content.caption ?? "[Imagen]";
+      return content.caption ?? "[Imagen recibida]";
     case "audio":
-      return "[Audio]";
+      return "[Audio recibido]";
     case "location":
       return `[Ubicación: ${content.latitude}, ${content.longitude}]`;
     case "interactive_reply":
@@ -99,7 +100,6 @@ export async function handleIncomingMessage(job: IncomingMessageJob): Promise<vo
   const text = contentToText(job.content);
 
   if (!tenantId) {
-    // No tenant configured — just echo without DB
     console.warn("[handler] No DEFAULT_TENANT_ID, echoing without DB");
     await provider.sendMessage(job.from, `Recibido: ${text}`);
     return;
@@ -118,15 +118,32 @@ export async function handleIncomingMessage(job: IncomingMessageJob): Promise<vo
     metadata: job.raw ? { raw: job.raw } : undefined,
   });
 
-  // TODO: Phase 2 — Replace echo with AI engine
-  const echoText = `Recibido: ${text}`;
-  const result = await provider.sendMessage(job.from, echoText);
+  // Generate response — AI engine or echo fallback
+  let responseText: string;
+
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      responseText = await processWithAI(text, {
+        tenantId,
+        conversationId: conversation.id,
+        whatsappNumber: job.from,
+      });
+    } catch (error) {
+      console.error("[handler] AI engine error:", error);
+      responseText =
+        "Disculpá, tuve un problema procesando tu mensaje. ¿Podés intentar de nuevo?";
+    }
+  } else {
+    responseText = `Recibido: ${text}`;
+  }
+
+  const result = await provider.sendMessage(job.from, responseText);
 
   // Save bot response
   await db.insert(messages).values({
     conversationId: conversation.id,
     role: "assistant",
-    content: echoText,
+    content: responseText,
     messageType: "text",
     whatsappMessageId: result.messageId ?? undefined,
   });
