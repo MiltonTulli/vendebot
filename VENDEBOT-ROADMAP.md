@@ -25,9 +25,9 @@
 - [x] Basic echo bot (responds with "Recibido: [message]") for testing (2026-02-22)
 
 ## Phase 2 — AI Engine
-- [ ] OpenAI integration with function calling (`src/lib/ai/engine.ts`)
-- [ ] System prompt builder per tenant (`src/lib/ai/prompts.ts`)
-- [ ] Tool definitions:
+- [x] OpenAI integration with function calling (`src/lib/ai/engine.ts`) (2026-02-22)
+- [x] System prompt builder per tenant (`src/lib/ai/prompts.ts`) (2026-02-22)
+- [x] Tool definitions (2026-02-22):
   - `search_products(query: string)` — semantic search in catalog
   - `get_product(id: string)` — full product details + price
   - `calculate_price(product_id, quantity, dimensions?)` — smart pricing with units + waste
@@ -35,9 +35,9 @@
   - `create_order(items[], customer)` — build order
   - `get_business_info()` — hours, location, delivery zones
   - `escalate_to_human(reason)` — hand off to owner
-- [ ] Conversation context management (sliding window + summary)
-- [ ] Price hallucination prevention: AI NEVER generates prices, only reads from DB
-- [ ] Fallback responses for unknown queries
+- [x] Conversation context management (sliding window + summary) (2026-02-22)
+- [x] Price hallucination prevention: AI NEVER generates prices, only reads from DB (2026-02-22)
+- [x] Fallback responses for unknown queries (2026-02-22)
 
 ## Phase 3 — Catalog Management
 - [ ] Product CRUD API (`/api/products`)
