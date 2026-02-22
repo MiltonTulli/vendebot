@@ -17,12 +17,12 @@
   - Interface: `sendMessage()`, `sendTemplate()`, `sendInteractiveButtons()`, `sendList()`
   - Twilio implementation (`src/lib/whatsapp/twilio.ts`)
   - Meta Cloud API implementation stub (`src/lib/whatsapp/meta.ts`) — for future migration
-- [ ] Twilio WhatsApp Sandbox setup (for development)
-- [ ] Webhook endpoint: `POST /api/webhook/whatsapp` — receive incoming messages
+- [x] Twilio WhatsApp Sandbox setup (for development) (2026-02-22)
+- [x] Webhook endpoint: `POST /api/webhook/whatsapp` — receive incoming messages (2026-02-22)
 - [ ] Message queue: process incoming messages async
-- [ ] Parse message types: text, image, audio, location, interactive reply
-- [ ] Store conversations in DB
-- [ ] Basic echo bot (responds with "Recibido: [message]") for testing
+- [x] Parse message types: text, image, audio, location, interactive reply (2026-02-22)
+- [x] Store conversations in DB (2026-02-22)
+- [x] Basic echo bot (responds with "Recibido: [message]") for testing (2026-02-22)
 
 ## Phase 2 — AI Engine
 - [ ] OpenAI integration with function calling (`src/lib/ai/engine.ts`)
