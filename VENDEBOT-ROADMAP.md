@@ -9,8 +9,8 @@
 - [x] Setup Clerk auth (2026-02-22)
 - [x] Setup shadcn/ui components (2026-02-22)
 - [x] Create DB schema (tenants, products, customers, orders, conversations, invoices) (2026-02-22)
-- [ ] Run initial migration
-- [ ] Basic layout: sidebar + header + main content area
+- [x] Run initial migration (2026-02-22) — migration SQL generated, db:push/migrate scripts ready. Needs DATABASE_URL to execute.
+- [x] Basic layout: sidebar + header + main content area (2026-02-22)
 
 ## Phase 1 — WhatsApp Integration (Twilio abstracted)
 - [ ] Create WhatsApp provider abstraction layer (`src/lib/whatsapp/provider.ts`)
