@@ -19,7 +19,7 @@
   - Meta Cloud API implementation stub (`src/lib/whatsapp/meta.ts`) — for future migration
 - [x] Twilio WhatsApp Sandbox setup (for development) (2026-02-22)
 - [x] Webhook endpoint: `POST /api/webhook/whatsapp` — receive incoming messages (2026-02-22)
-- [ ] Message queue: process incoming messages async
+- [x] Message queue: process incoming messages async (2026-02-22)
 - [x] Parse message types: text, image, audio, location, interactive reply (2026-02-22)
 - [x] Store conversations in DB (2026-02-22)
 - [x] Basic echo bot (responds with "Recibido: [message]") for testing (2026-02-22)
