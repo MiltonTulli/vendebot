@@ -2,97 +2,19 @@
  * WhatsApp Webhook Endpoint
  *
  * Receives incoming messages from the WhatsApp provider (Twilio/Meta),
- * stores conversation + message in DB, and responds with an echo.
+ * responds immediately with 200 OK, then processes the message
+ * asynchronously using Next.js `after()`.
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { getWhatsAppProvider } from "@/lib/whatsapp";
-import { db } from "@/lib/db";
-import { conversations, messages, customers } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { processMessage, registerMessageHandler } from "@/lib/queue";
+import { handleIncomingMessage } from "@/lib/queue/handler";
+import type { IncomingMessageJob } from "@/lib/queue";
 
-/**
- * Find or create a conversation for the given whatsapp number.
- * For now, we use a hardcoded tenant (single-tenant dev mode).
- * TODO: Route to correct tenant based on the "to" number.
- */
-async function getOrCreateConversation(whatsappNumber: string, tenantId: string) {
-  // Find existing active conversation
-  const existing = await db
-    .select()
-    .from(conversations)
-    .where(
-      and(
-        eq(conversations.whatsappNumber, whatsappNumber),
-        eq(conversations.tenantId, tenantId),
-        eq(conversations.status, "active")
-      )
-    )
-    .limit(1);
-
-  if (existing.length > 0) {
-    return existing[0];
-  }
-
-  // Find or create customer
-  let customer = await db
-    .select()
-    .from(customers)
-    .where(
-      and(
-        eq(customers.whatsappNumber, whatsappNumber),
-        eq(customers.tenantId, tenantId)
-      )
-    )
-    .limit(1);
-
-  let customerId: string | null = null;
-  if (customer.length > 0) {
-    customerId = customer[0].id;
-  } else {
-    const [newCustomer] = await db
-      .insert(customers)
-      .values({
-        tenantId,
-        whatsappNumber,
-      })
-      .returning();
-    customerId = newCustomer.id;
-  }
-
-  // Create new conversation
-  const [conversation] = await db
-    .insert(conversations)
-    .values({
-      tenantId,
-      customerId,
-      whatsappNumber,
-      status: "active",
-    })
-    .returning();
-
-  return conversation;
-}
-
-/**
- * Extract a text representation from any incoming message content.
- */
-function contentToText(content: { type: string; body?: string; caption?: string; title?: string; latitude?: number; longitude?: number; mediaUrl?: string }): string {
-  switch (content.type) {
-    case "text":
-      return content.body ?? "";
-    case "image":
-      return content.caption ?? "[Imagen]";
-    case "audio":
-      return "[Audio]";
-    case "location":
-      return `[Ubicación: ${content.latitude}, ${content.longitude}]`;
-    case "interactive_reply":
-      return content.title ?? "";
-    default:
-      return "[Mensaje no soportado]";
-  }
-}
+// Register the default message handler
+registerMessageHandler(handleIncomingMessage);
 
 export async function POST(request: NextRequest) {
   try {
@@ -128,48 +50,19 @@ export async function POST(request: NextRequest) {
 
     console.log(`[webhook] Incoming ${incoming.content.type} from ${incoming.from}`);
 
-    // For dev/sandbox: use a default tenant ID from env, or skip DB if not set
-    const tenantId = process.env.DEFAULT_TENANT_ID;
-    if (!tenantId) {
-      // No tenant configured — just echo without DB
-      console.warn("[webhook] No DEFAULT_TENANT_ID set, echoing without DB storage");
-      const text = contentToText(incoming.content as Parameters<typeof contentToText>[0]);
-      await provider.sendMessage(incoming.from, `Recibido: ${text}`);
-      return NextResponse.json({ ok: true });
-    }
+    // Build the job
+    const job: IncomingMessageJob = {
+      from: incoming.from,
+      content: incoming.content as IncomingMessageJob["content"],
+      messageId: incoming.messageId,
+      raw: incoming.raw,
+      receivedAt: new Date(),
+    };
 
-    // Store in DB
-    const conversation = await getOrCreateConversation(incoming.from, tenantId);
-    const text = contentToText(incoming.content as Parameters<typeof contentToText>[0]);
-
-    // Save incoming message
-    await db.insert(messages).values({
-      conversationId: conversation.id,
-      role: "user",
-      content: text,
-      messageType: incoming.content.type,
-      whatsappMessageId: incoming.messageId,
-      metadata: incoming.raw ? { raw: incoming.raw } : undefined,
+    // Process asynchronously — webhook responds immediately
+    after(async () => {
+      await processMessage(job);
     });
-
-    // Echo bot response
-    const echoText = `Recibido: ${text}`;
-    const result = await provider.sendMessage(incoming.from, echoText);
-
-    // Save bot response
-    await db.insert(messages).values({
-      conversationId: conversation.id,
-      role: "assistant",
-      content: echoText,
-      messageType: "text",
-      whatsappMessageId: result.messageId ?? undefined,
-    });
-
-    // Update conversation timestamp
-    await db
-      .update(conversations)
-      .set({ updatedAt: new Date() })
-      .where(eq(conversations.id, conversation.id));
 
     return NextResponse.json({ ok: true });
   } catch (error) {
