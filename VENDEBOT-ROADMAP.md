@@ -4,11 +4,11 @@
 - [x] Init Next.js 16 + TypeScript + Tailwind (2026-02-22)
 - [x] GitHub repo: MiltonTulli/vendebot (2026-02-22)
 - [x] Vercel deploy: vendebot.vercel.app (2026-02-22)
-- [ ] Install core dependencies: shadcn/ui, drizzle-orm, @neondatabase/serverless, clerk, twilio
-- [ ] Setup Drizzle ORM + Neon PostgreSQL connection
-- [ ] Setup Clerk auth
-- [ ] Setup shadcn/ui components
-- [ ] Create DB schema (tenants, products, customers, orders, conversations, invoices)
+- [x] Install core dependencies: shadcn/ui, drizzle-orm, @neondatabase/serverless, clerk, twilio (2026-02-22)
+- [x] Setup Drizzle ORM + Neon PostgreSQL connection (2026-02-22)
+- [x] Setup Clerk auth (2026-02-22)
+- [x] Setup shadcn/ui components (2026-02-22)
+- [x] Create DB schema (tenants, products, customers, orders, conversations, invoices) (2026-02-22)
 - [ ] Run initial migration
 - [ ] Basic layout: sidebar + header + main content area
 
