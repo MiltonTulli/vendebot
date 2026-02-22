@@ -13,7 +13,7 @@
 - [x] Basic layout: sidebar + header + main content area (2026-02-22)
 
 ## Phase 1 — WhatsApp Integration (Twilio abstracted)
-- [ ] Create WhatsApp provider abstraction layer (`src/lib/whatsapp/provider.ts`)
+- [x] Create WhatsApp provider abstraction layer (`src/lib/whatsapp/provider.ts`) (2026-02-22)
   - Interface: `sendMessage()`, `sendTemplate()`, `sendInteractiveButtons()`, `sendList()`
   - Twilio implementation (`src/lib/whatsapp/twilio.ts`)
   - Meta Cloud API implementation stub (`src/lib/whatsapp/meta.ts`) — for future migration
