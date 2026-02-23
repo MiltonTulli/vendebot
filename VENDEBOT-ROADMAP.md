@@ -51,15 +51,15 @@
   - "500g de tomate" → 0.5 × kg_price
 
 ## Phase 4 — Dashboard
-- [ ] Landing page (public)
-- [ ] Auth pages (Clerk)
-- [ ] Onboarding wizard (business info → connect WhatsApp → upload catalog → customize bot → test → go live)
-- [ ] Dashboard home: today's orders, messages, revenue
-- [ ] Orders page: list, filter, detail, status management
-- [ ] Catalog page: product grid/table, CRUD, import/export
-- [ ] Conversations page: chat history, real-time view, manual intervention
-- [ ] Customers page: list, detail, order history
-- [ ] Settings: business info, bot personality, hours, notifications
+- [x] Landing page (public) (2026-02-22)
+- [x] Auth pages (Clerk) (2026-02-22)
+- [x] Onboarding wizard (business info → connect WhatsApp → upload catalog → customize bot → test → go live) (2026-02-22)
+- [x] Dashboard home: today's orders, messages, revenue (2026-02-22)
+- [x] Orders page: list, filter, detail, status management (2026-02-22)
+- [x] Catalog page: product grid/table, CRUD, import/export (2026-02-22)
+- [x] Conversations page: chat history, real-time view, manual intervention (2026-02-22)
+- [x] Customers page: list, detail, order history (2026-02-22)
+- [x] Settings: business info, bot personality, hours, notifications (2026-02-22)
 
 ## Phase 5 — Owner Management Channel
 - [ ] Dedicated WhatsApp channel for owner ↔ bot communication
