@@ -55,6 +55,7 @@ export const tenants = pgTable("tenants", {
   afipCert: text("afip_cert"),
   afipKey: text("afip_key"),
   afipCuit: text("afip_cuit"),
+  ownerPhoneNumber: text("owner_phone_number"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -152,6 +153,29 @@ export const messages = pgTable("messages", {
   messageType: text("message_type").default("text"), // text, image, audio, location, interactive
   whatsappMessageId: text("whatsapp_message_id"),
   metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Change Logs (owner management actions)
+export const changeLogActionEnum = pgEnum("change_log_action", [
+  "update_price",
+  "update_hours",
+  "add_product",
+  "remove_product",
+  "update_product",
+  "broadcast",
+  "other",
+]);
+
+export const changeLogs = pgTable("change_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id")
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  action: changeLogActionEnum("action").notNull(),
+  description: text("description").notNull(),
+  details: jsonb("details").$type<Record<string, unknown>>(),
+  source: text("source").notNull().default("whatsapp"), // "whatsapp" | "dashboard"
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

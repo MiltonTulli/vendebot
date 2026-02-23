@@ -6,10 +6,11 @@
  */
 
 import { db } from "@/lib/db";
-import { conversations, messages, customers } from "@/lib/db/schema";
+import { conversations, messages, customers, tenants } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getWhatsAppProvider } from "@/lib/whatsapp";
 import { processWithAI } from "@/lib/ai";
+import { processOwnerMessage } from "@/lib/ai/owner-engine";
 import type { IncomingMessageJob } from "./index";
 
 /**
@@ -92,6 +93,42 @@ function contentToText(content: IncomingMessageJob["content"]): string {
 }
 
 /**
+ * Check if the sender is the business owner.
+ */
+async function isOwnerNumber(
+  phoneNumber: string,
+  tenantId: string
+): Promise<boolean> {
+  // Check env var first (quick path)
+  if (process.env.OWNER_PHONE_NUMBER) {
+    const normalized = phoneNumber.replace(/\D/g, "");
+    const ownerNormalized = process.env.OWNER_PHONE_NUMBER.replace(/\D/g, "");
+    if (normalized === ownerNormalized || normalized.endsWith(ownerNormalized) || ownerNormalized.endsWith(normalized)) {
+      return true;
+    }
+  }
+
+  // Check DB
+  const [tenant] = await db
+    .select({ ownerPhoneNumber: tenants.ownerPhoneNumber })
+    .from(tenants)
+    .where(eq(tenants.id, tenantId))
+    .limit(1);
+
+  if (tenant?.ownerPhoneNumber) {
+    const normalized = phoneNumber.replace(/\D/g, "");
+    const ownerNormalized = tenant.ownerPhoneNumber.replace(/\D/g, "");
+    return (
+      normalized === ownerNormalized ||
+      normalized.endsWith(ownerNormalized) ||
+      ownerNormalized.endsWith(normalized)
+    );
+  }
+
+  return false;
+}
+
+/**
  * Handle an incoming message: store in DB, generate response, send reply.
  */
 export async function handleIncomingMessage(job: IncomingMessageJob): Promise<void> {
@@ -105,6 +142,9 @@ export async function handleIncomingMessage(job: IncomingMessageJob): Promise<vo
     return;
   }
 
+  // Detect if sender is the owner
+  const isOwner = await isOwnerNumber(job.from, tenantId);
+
   // Store in DB
   const conversation = await getOrCreateConversation(job.from, tenantId);
 
@@ -115,19 +155,27 @@ export async function handleIncomingMessage(job: IncomingMessageJob): Promise<vo
     content: text,
     messageType: job.content.type,
     whatsappMessageId: job.messageId,
-    metadata: job.raw ? { raw: job.raw } : undefined,
+    metadata: job.raw ? { raw: job.raw, isOwner } : { isOwner },
   });
 
-  // Generate response — AI engine or echo fallback
+  // Generate response — route to owner engine or customer engine
   let responseText: string;
 
-  if (process.env.OPENAI_API_KEY) {
+  if (process.env.OPENAI_API_KEY || process.env.GOOGLE_AI_API_KEY) {
     try {
-      responseText = await processWithAI(text, {
-        tenantId,
-        conversationId: conversation.id,
-        whatsappNumber: job.from,
-      });
+      if (isOwner) {
+        console.log(`[handler] Owner message detected from ${job.from}`);
+        responseText = await processOwnerMessage(text, {
+          tenantId,
+          conversationId: conversation.id,
+        });
+      } else {
+        responseText = await processWithAI(text, {
+          tenantId,
+          conversationId: conversation.id,
+          whatsappNumber: job.from,
+        });
+      }
     } catch (error) {
       console.error("[handler] AI engine error:", error);
       responseText =
@@ -154,5 +202,5 @@ export async function handleIncomingMessage(job: IncomingMessageJob): Promise<vo
     .set({ updatedAt: new Date() })
     .where(eq(conversations.id, conversation.id));
 
-  console.log(`[handler] Processed message from ${job.from}: "${text.substring(0, 50)}"`);
+  console.log(`[handler] Processed ${isOwner ? "OWNER" : "customer"} message from ${job.from}: "${text.substring(0, 50)}"`);
 }
