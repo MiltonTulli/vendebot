@@ -9,6 +9,7 @@ import {
   Settings,
   Bot,
   History,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -32,6 +33,7 @@ const navItems = [
   { title: "Catálogo", href: "/app/catalog", icon: Package },
   { title: "Conversaciones", href: "/app/conversations", icon: MessageSquare },
   { title: "Clientes", href: "/app/customers", icon: Users },
+  { title: "Facturas", href: "/app/invoices", icon: FileText },
   { title: "Registro de cambios", href: "/app/change-log", icon: History },
   { title: "Configuración", href: "/app/settings", icon: Settings },
 ];

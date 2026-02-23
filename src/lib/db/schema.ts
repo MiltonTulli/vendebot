@@ -49,6 +49,7 @@ export const tenants = pgTable("tenants", {
     hours?: string;
     deliveryZones?: string[];
     description?: string;
+    ivaCondition?: string;
   }>(),
   botPersonality: text("bot_personality"),
   mercadopagoAccessToken: text("mercadopago_access_token"),

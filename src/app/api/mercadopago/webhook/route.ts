@@ -11,6 +11,7 @@ import { orders, tenants, customers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getPayment } from "@/lib/mercadopago";
 import { getWhatsAppProvider } from "@/lib/whatsapp";
+import { generateInvoiceForOrder } from "@/lib/afip/auto-invoice";
 
 export async function POST(request: NextRequest) {
   try {
@@ -85,6 +86,16 @@ export async function POST(request: NextRequest) {
     }
 
     await db.update(orders).set(updateData).where(eq(orders.id, orderId));
+
+    // Auto-generate invoice on payment confirmation
+    if (paymentStatus === "paid") {
+      try {
+        await generateInvoiceForOrder(tenant, orderId);
+      } catch (invoiceError) {
+        console.error("Auto-invoice generation failed:", invoiceError);
+        // Don't fail the webhook — invoice can be retried manually
+      }
+    }
 
     // Notify owner via WhatsApp if payment approved
     if (paymentStatus === "paid" && tenant.ownerPhoneNumber) {
