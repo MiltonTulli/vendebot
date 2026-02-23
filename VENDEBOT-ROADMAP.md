@@ -91,11 +91,11 @@
 - [x] Dashboard: invoice list, download, CAE status (2026-02-22)
 
 ## Phase 8 — Integrations
-- [ ] Tiendanube API (product sync, stock sync, order sync)
-- [ ] MercadoLibre API (listing sync, stock)
-- [ ] External database connector (PostgreSQL/MySQL read)
-- [ ] Order tracking page (public link per order)
-- [ ] WhatsApp status updates on order state changes
+- [x] Tiendanube API (product sync, stock sync, order sync) (2026-02-22)
+- [x] MercadoLibre API (listing sync, stock) (2026-02-22)
+- [x] External database connector (PostgreSQL/MySQL read) (2026-02-22)
+- [x] Order tracking page (public link per order) (2026-02-22)
+- [x] WhatsApp status updates on order state changes (2026-02-22)
 
 ## Phase 9 — Growth
 - [ ] WhatsApp broadcast campaigns (with Meta template approval)
