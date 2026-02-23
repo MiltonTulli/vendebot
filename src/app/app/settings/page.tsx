@@ -8,6 +8,8 @@ import {
   Bell,
   Save,
   MessageSquare,
+  CreditCard,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +59,10 @@ export default function SettingsPage() {
           <TabsTrigger value="notifications">
             <Bell className="mr-2 h-4 w-4" />
             Notificaciones
+          </TabsTrigger>
+          <TabsTrigger value="payments">
+            <CreditCard className="mr-2 h-4 w-4" />
+            Pagos
           </TabsTrigger>
         </TabsList>
 
@@ -253,6 +259,46 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground">
                   Número donde recibir las notificaciones del bot
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        {/* Payments (MercadoPago) */}
+        <TabsContent value="payments">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">MercadoPago</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+                      <CreditCard className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">MercadoPago</p>
+                      <p className="text-xs text-muted-foreground">
+                        Conectá tu cuenta para recibir pagos online
+                      </p>
+                    </div>
+                  </div>
+                  <Button asChild>
+                    <a href="/api/mercadopago/oauth">
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Conectar cuenta
+                    </a>
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>Al conectar MercadoPago:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>Se generará un link de pago automático con cada pedido confirmado</li>
+                  <li>El bot enviará el link al cliente por WhatsApp</li>
+                  <li>Cuando el pago se acredite, el pedido se confirma automáticamente</li>
+                  <li>Recibirás una notificación por WhatsApp de cada pago recibido</li>
+                </ul>
               </div>
             </CardContent>
           </Card>

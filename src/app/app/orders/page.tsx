@@ -41,6 +41,19 @@ const statusConfig: Record<
   cancelled: { label: "Cancelado", variant: "destructive" },
 };
 
+const paymentStatusConfig: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "outline" | "destructive"; icon: string }
+> = {
+  pending: { label: "Pago pendiente", variant: "outline", icon: "🕐" },
+  paid: { label: "Pagado", variant: "default", icon: "✅" },
+  rejected: { label: "Rechazado", variant: "destructive", icon: "❌" },
+  refunded: { label: "Reembolsado", variant: "secondary", icon: "↩️" },
+  cancelled: { label: "Cancelado", variant: "destructive", icon: "🚫" },
+  in_mediation: { label: "En disputa", variant: "destructive", icon: "⚠️" },
+  charged_back: { label: "Contracargo", variant: "destructive", icon: "⚠️" },
+};
+
 const demoOrders = [
   {
     id: "ORD-001",
@@ -186,6 +199,10 @@ export default function OrdersPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                <Badge variant={paymentStatusConfig[order.payment]?.variant ?? "outline"}>
+                  {paymentStatusConfig[order.payment]?.icon ?? ""}{" "}
+                  {paymentStatusConfig[order.payment]?.label ?? order.payment}
+                </Badge>
                 <span className="text-sm font-bold">
                   ${order.total.toLocaleString("es-AR")}
                 </span>
@@ -236,6 +253,16 @@ export default function OrdersPage() {
                   <div className="flex justify-between border-t pt-2 font-bold">
                     <span>Total</span>
                     <span>${selectedOrder.total.toLocaleString("es-AR")}</span>
+                  </div>
+                </div>
+                {/* Payment status */}
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Pago</p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant={paymentStatusConfig[selectedOrder.payment]?.variant ?? "outline"}>
+                      {paymentStatusConfig[selectedOrder.payment]?.icon ?? ""}{" "}
+                      {paymentStatusConfig[selectedOrder.payment]?.label ?? selectedOrder.payment}
+                    </Badge>
                   </div>
                 </div>
                 {selectedOrder.notes && (

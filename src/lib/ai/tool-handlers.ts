@@ -8,6 +8,7 @@
 import { db } from "@/lib/db";
 import { products, tenants, orders, customers, conversations } from "@/lib/db/schema";
 import { eq, and, ilike, or } from "drizzle-orm";
+import { createCheckoutPreference } from "@/lib/mercadopago";
 
 interface ToolContext {
   tenantId: string;
@@ -235,13 +236,58 @@ async function createOrder(
     })
     .returning();
 
-  return {
+  // Try to generate MercadoPago payment link if tenant has MP connected
+  let paymentLink: string | null = null;
+  try {
+    const [tenant] = await db
+      .select()
+      .from(tenants)
+      .where(eq(tenants.id, ctx.tenantId))
+      .limit(1);
+
+    if (tenant?.mercadopagoAccessToken) {
+      const appUrl =
+        process.env.NEXT_PUBLIC_APP_URL || "https://vendebot.vercel.app";
+      const preference = await createCheckoutPreference({
+        accessToken: tenant.mercadopagoAccessToken,
+        orderId: order.id,
+        items: orderItems.map((i) => ({
+          title: i.productName,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+        })),
+        notificationUrl: `${appUrl}/api/mercadopago/webhook`,
+      });
+
+      paymentLink = preference.initPoint;
+
+      await db
+        .update(orders)
+        .set({
+          paymentLink: preference.initPoint,
+          mercadopagoPreferenceId: preference.preferenceId,
+          updatedAt: new Date(),
+        })
+        .where(eq(orders.id, order.id));
+    }
+  } catch (err) {
+    console.error("Failed to create MP payment link:", err);
+  }
+
+  const result: Record<string, unknown> = {
     success: true,
     orderId: order.id,
     totalAmount: `$${totalAmount.toFixed(2)}`,
     itemCount: items.length,
     message: `Pedido #${order.id.slice(0, 8)} creado por $${totalAmount.toFixed(2)}. Estado: pendiente.`,
   };
+
+  if (paymentLink) {
+    result.paymentLink = paymentLink;
+    result.message = `Pedido #${order.id.slice(0, 8)} creado por $${totalAmount.toFixed(2)}. Podés pagar acá: ${paymentLink}`;
+  }
+
+  return result;
 }
 
 async function getBusinessInfo(tenantId: string) {
