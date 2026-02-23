@@ -98,7 +98,7 @@
 - [x] WhatsApp status updates on order state changes (2026-02-22)
 
 ## Phase 9 — Growth
-- [ ] WhatsApp broadcast campaigns (with Meta template approval)
-- [ ] SEO landing pages
-- [ ] Analytics dashboard (conversion, revenue, popular products)
-- [ ] Multi-tenant billing (Stripe or MercadoPago subscriptions)
+- [x] WhatsApp broadcast campaigns (with Meta template approval) (2026-02-22)
+- [x] SEO landing pages (2026-02-22)
+- [x] Analytics dashboard (conversion, revenue, popular products) (2026-02-22)
+- [x] Multi-tenant billing (MercadoPago subscriptions) (2026-02-22)
