@@ -40,12 +40,12 @@
 - [x] Fallback responses for unknown queries (2026-02-22)
 
 ## Phase 3 — Catalog Management
-- [ ] Product CRUD API (`/api/products`)
-- [ ] CSV/Excel upload + AI parsing (`/api/catalog/import`)
-- [ ] Google Sheets OAuth + sync (`/api/catalog/sheets`)
-- [ ] Support units: unidad, kg, m², m lineal, litro, docena, combo
-- [ ] Configurable waste percentage per product
-- [ ] Smart price calculator:
+- [x] Product CRUD API (`/api/products`) (2026-02-22)
+- [x] CSV/Excel upload + AI parsing (`/api/catalog/import`) (2026-02-22)
+- [x] Google Sheets OAuth + sync (`/api/catalog/sheets`) (2026-02-22)
+- [x] Support units: unidad, kg, m², m lineal, litro, docena, combo (2026-02-22)
+- [x] Configurable waste percentage per product (2026-02-22)
+- [x] Smart price calculator: (2026-02-22)
   - "Necesito para 3x2.5m" → 7.5m² + 5% waste = 7.88m² × price
   - "2 docenas de empanadas de carne" → 2 × dozen_price
   - "500g de tomate" → 0.5 × kg_price
