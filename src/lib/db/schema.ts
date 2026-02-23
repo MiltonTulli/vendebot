@@ -58,6 +58,13 @@ export const tenants = pgTable("tenants", {
   afipCert: text("afip_cert"),
   afipKey: text("afip_key"),
   afipCuit: text("afip_cuit"),
+  tiendanubeStoreId: text("tiendanube_store_id"),
+  tiendanubeAccessToken: text("tiendanube_access_token"),
+  mercadolibreAccessToken: text("mercadolibre_access_token"),
+  mercadolibreRefreshToken: text("mercadolibre_refresh_token"),
+  mercadolibreUserId: text("mercadolibre_user_id"),
+  externalDbUrl: text("external_db_url"),
+  externalDbType: text("external_db_type"), // "postgresql" | "mysql"
   ownerPhoneNumber: text("owner_phone_number"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -181,6 +188,33 @@ export const changeLogs = pgTable("change_logs", {
   description: text("description").notNull(),
   details: jsonb("details").$type<Record<string, unknown>>(),
   source: text("source").notNull().default("whatsapp"), // "whatsapp" | "dashboard"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Integration configs per tenant
+export const integrations = pgTable("integrations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id")
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(), // "tiendanube" | "mercadolibre" | "external_db"
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  storeId: text("store_id"),
+  config: jsonb("config").$type<Record<string, unknown>>(),
+  enabled: boolean("enabled").notNull().default(true),
+  lastSyncAt: timestamp("last_sync_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Order tracking tokens (public access)
+export const orderTrackingTokens = pgTable("order_tracking_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orderId: uuid("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

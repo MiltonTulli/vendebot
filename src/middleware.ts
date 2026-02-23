@@ -7,6 +7,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhook(.*)",
+  "/tracking(.*)",
 ]);
 
 function noopMiddleware(_request: NextRequest) {
