@@ -81,14 +81,14 @@
 - [x] Dashboard: payment status per order (2026-02-22)
 
 ## Phase 7 — Invoicing (ARCA/AFIP)
-- [ ] Integrate @afipsdk/afip.js
-- [ ] Testing environment (homologación) setup
-- [ ] Onboarding: guide for certificate generation + upload
-- [ ] Invoice generation on payment confirmation
-- [ ] Auto-determine invoice type (A/B/C) based on buyer fiscal data
-- [ ] Request fiscal data from buyer via WhatsApp if needed
-- [ ] PDF generation + send via WhatsApp
-- [ ] Dashboard: invoice list, download, CAE status
+- [x] Integrate @afipsdk/afip.js (2026-02-22)
+- [x] Testing environment (homologación) setup (2026-02-22)
+- [x] Onboarding: guide for certificate generation + upload (2026-02-22)
+- [x] Invoice generation on payment confirmation (2026-02-22)
+- [x] Auto-determine invoice type (A/B/C) based on buyer fiscal data (2026-02-22)
+- [x] Request fiscal data from buyer via WhatsApp if needed (2026-02-22)
+- [x] PDF generation + send via WhatsApp (2026-02-22)
+- [x] Dashboard: invoice list, download, CAE status (2026-02-22)
 
 ## Phase 8 — Integrations
 - [ ] Tiendanube API (product sync, stock sync, order sync)
