@@ -8,6 +8,13 @@
       "when": 1771796973589,
       "tag": "0000_common_corsair",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771805699377,
+      "tag": "0001_polite_princess_powerful",
+      "breakpoints": true
     }
   ]
 }
