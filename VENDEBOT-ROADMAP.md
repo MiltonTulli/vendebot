@@ -74,11 +74,11 @@
 - [x] Change log in dashboard (2026-02-22)
 
 ## Phase 6 — Payments (MercadoPago)
-- [ ] MercadoPago OAuth integration
-- [ ] Generate checkout links on order confirmation
-- [ ] Send payment link via WhatsApp
-- [ ] Webhook: payment confirmed → update order status → notify owner
-- [ ] Dashboard: payment status per order
+- [x] MercadoPago OAuth integration (2026-02-22)
+- [x] Generate checkout links on order confirmation (2026-02-22)
+- [x] Send payment link via WhatsApp (2026-02-22)
+- [x] Webhook: payment confirmed → update order status → notify owner (2026-02-22)
+- [x] Dashboard: payment status per order (2026-02-22)
 
 ## Phase 7 — Invoicing (ARCA/AFIP)
 - [ ] Integrate @afipsdk/afip.js
