@@ -177,7 +177,10 @@ export async function handleIncomingMessage(job: IncomingMessageJob): Promise<vo
         });
       }
     } catch (error) {
-      console.error("[handler] AI engine error:", error);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const errStack = error instanceof Error ? error.stack : undefined;
+      console.error(`[handler] AI engine error for tenant=${tenantId} from=${job.from} isOwner=${isOwner}:`, errMsg);
+      if (errStack) console.error(`[handler] Stack:`, errStack);
       responseText =
         "Disculpá, tuve un problema procesando tu mensaje. ¿Podés intentar de nuevo?";
     }

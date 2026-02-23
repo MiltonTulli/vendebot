@@ -12,42 +12,10 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-// Demo data — in production these come from DB queries
-const stats = [
-  {
-    title: "Pedidos hoy",
-    value: "12",
-    change: "+3 vs ayer",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Mensajes hoy",
-    value: "148",
-    change: "+22%",
-    icon: MessageSquare,
-  },
-  {
-    title: "Ingresos hoy",
-    value: "$125.400",
-    change: "+15%",
-    icon: DollarSign,
-  },
-  {
-    title: "Clientes activos",
-    value: "34",
-    change: "+5 nuevos",
-    icon: Users,
-  },
-];
-
-const recentOrders = [
-  { id: "ORD-001", customer: "María García", total: "$12.500", status: "pending", time: "Hace 5 min" },
-  { id: "ORD-002", customer: "Juan Pérez", total: "$8.200", status: "confirmed", time: "Hace 12 min" },
-  { id: "ORD-003", customer: "Ana López", total: "$23.100", status: "preparing", time: "Hace 25 min" },
-  { id: "ORD-004", customer: "Carlos Ruiz", total: "$5.800", status: "delivered", time: "Hace 1h" },
-  { id: "ORD-005", customer: "Laura Fernández", total: "$15.600", status: "ready", time: "Hace 2h" },
-];
+import { db } from "@/lib/db";
+import { orders, messages, customers, conversations } from "@/lib/db/schema";
+import { eq, and, gte, sql, desc } from "drizzle-orm";
+import { getCurrentTenantId } from "@/lib/db/get-tenant";
 
 const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
   pending: { label: "Pendiente", variant: "outline" },
@@ -58,14 +26,90 @@ const statusLabels: Record<string, { label: string; variant: "default" | "second
   cancelled: { label: "Cancelado", variant: "destructive" },
 };
 
-const recentConversations = [
-  { customer: "María García", lastMessage: "Perfecto, esperamos el pedido", time: "Hace 2 min", unread: true },
-  { customer: "Pedro Sánchez", lastMessage: "¿Tienen envío a Zona Norte?", time: "Hace 8 min", unread: true },
-  { customer: "Lucía Torres", lastMessage: "Gracias, quedó todo genial 🙌", time: "Hace 15 min", unread: false },
-  { customer: "Martín Díaz", lastMessage: "Quiero 2 docenas de empanadas", time: "Hace 30 min", unread: false },
-];
+export default async function DashboardPage() {
+  const tenantId = await getCurrentTenantId();
 
-export default function DashboardPage() {
+  if (!tenantId) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <h1 className="text-2xl font-bold">Bienvenido a VendéBot</h1>
+        <p className="text-muted-foreground">Completá la configuración inicial para empezar.</p>
+        <Button asChild><Link href="/app/onboarding">Configurar</Link></Button>
+      </div>
+    );
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Parallel queries
+  const [
+    ordersToday,
+    messagesToday,
+    revenueToday,
+    activeCustomers,
+    recentOrderRows,
+    recentConvRows,
+  ] = await Promise.all([
+    db.select({ count: sql<number>`count(*)::int` })
+      .from(orders)
+      .where(and(eq(orders.tenantId, tenantId), gte(orders.createdAt, today)))
+      .then(r => r[0]?.count ?? 0),
+    db.select({ count: sql<number>`count(*)::int` })
+      .from(messages)
+      .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+      .where(and(eq(conversations.tenantId, tenantId), gte(messages.createdAt, today)))
+      .then(r => r[0]?.count ?? 0),
+    db.select({ total: sql<string>`coalesce(sum(${orders.totalAmount}), 0)` })
+      .from(orders)
+      .where(and(eq(orders.tenantId, tenantId), gte(orders.createdAt, today)))
+      .then(r => parseFloat(r[0]?.total ?? "0")),
+    db.select({ count: sql<number>`count(*)::int` })
+      .from(customers)
+      .where(eq(customers.tenantId, tenantId))
+      .then(r => r[0]?.count ?? 0),
+    db.select({
+      id: orders.id,
+      totalAmount: orders.totalAmount,
+      status: orders.status,
+      createdAt: orders.createdAt,
+      customerName: customers.name,
+    })
+      .from(orders)
+      .leftJoin(customers, eq(orders.customerId, customers.id))
+      .where(eq(orders.tenantId, tenantId))
+      .orderBy(desc(orders.createdAt))
+      .limit(5),
+    db.select({
+      id: conversations.id,
+      whatsappNumber: conversations.whatsappNumber,
+      updatedAt: conversations.updatedAt,
+      customerName: customers.name,
+      status: conversations.status,
+    })
+      .from(conversations)
+      .leftJoin(customers, eq(conversations.customerId, customers.id))
+      .where(eq(conversations.tenantId, tenantId))
+      .orderBy(desc(conversations.updatedAt))
+      .limit(4),
+  ]);
+
+  const stats = [
+    { title: "Pedidos hoy", value: String(ordersToday), icon: ShoppingCart },
+    { title: "Mensajes hoy", value: String(messagesToday), icon: MessageSquare },
+    { title: "Ingresos hoy", value: `$${revenueToday.toLocaleString("es-AR")}`, icon: DollarSign },
+    { title: "Clientes", value: String(activeCustomers), icon: Users },
+  ];
+
+  function timeAgo(date: Date) {
+    const mins = Math.floor((Date.now() - date.getTime()) / 60000);
+    if (mins < 1) return "Ahora";
+    if (mins < 60) return `Hace ${mins} min`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `Hace ${hrs}h`;
+    return `Hace ${Math.floor(hrs / 24)}d`;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -92,10 +136,6 @@ export default function DashboardPage() {
               <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">{s.title}</p>
                 <p className="text-2xl font-bold">{s.value}</p>
-                <p className="flex items-center gap-1 text-xs text-green-600">
-                  <TrendingUp className="h-3 w-3" />
-                  {s.change}
-                </p>
               </div>
             </CardContent>
           </Card>
@@ -114,23 +154,26 @@ export default function DashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-3 p-5 pt-0">
-            {recentOrders.map((o) => (
+            {recentOrderRows.length === 0 && (
+              <p className="text-sm text-muted-foreground py-4 text-center">No hay pedidos aún</p>
+            )}
+            {recentOrderRows.map((o) => (
               <div
                 key={o.id}
                 className="flex items-center justify-between rounded-lg border p-3"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{o.customer}</span>
-                    <span className="text-xs text-muted-foreground">{o.id}</span>
+                    <span className="text-sm font-medium">{o.customerName ?? "Cliente"}</span>
+                    <span className="text-xs text-muted-foreground">{o.id.slice(0, 8)}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    {o.time}
+                    {timeAgo(o.createdAt)}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold">{o.total}</span>
+                  <span className="text-sm font-semibold">${parseFloat(o.totalAmount).toLocaleString("es-AR")}</span>
                   <Badge variant={statusLabels[o.status]?.variant ?? "outline"}>
                     {statusLabels[o.status]?.label ?? o.status}
                   </Badge>
@@ -151,24 +194,27 @@ export default function DashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-3 p-5 pt-0">
-            {recentConversations.map((c) => (
+            {recentConvRows.length === 0 && (
+              <p className="text-sm text-muted-foreground py-4 text-center">No hay conversaciones aún</p>
+            )}
+            {recentConvRows.map((c) => (
               <div
-                key={c.customer}
+                key={c.id}
                 className="flex items-center justify-between rounded-lg border p-3"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{c.customer}</span>
-                    {c.unread && (
+                    <span className="text-sm font-medium">{c.customerName ?? c.whatsappNumber}</span>
+                    {c.status === "active" && (
                       <span className="h-2 w-2 rounded-full bg-primary" />
                     )}
                   </div>
                   <p className="truncate text-xs text-muted-foreground">
-                    {c.lastMessage}
+                    {c.whatsappNumber}
                   </p>
                 </div>
                 <span className="shrink-0 text-xs text-muted-foreground">
-                  {c.time}
+                  {timeAgo(c.updatedAt)}
                 </span>
               </div>
             ))}

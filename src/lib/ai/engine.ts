@@ -108,51 +108,69 @@ export async function processWithAI(
     chatMessages.push({ role: "user", content: userMessage });
   }
 
-  // Run completion loop with tool calls
-  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-    const completion = await getOpenAI().chat.completions.create({
-      model: MODEL,
-      messages: chatMessages,
-      tools: aiTools,
-      tool_choice: "auto",
-    });
-
-    const choice = completion.choices[0];
-    if (!choice?.message) {
-      return "Disculpá, no pude procesar tu mensaje. ¿Podés repetirlo?";
-    }
-
-    const assistantMsg = choice.message;
-
-    // If no tool calls, return the text response
-    if (!assistantMsg.tool_calls || assistantMsg.tool_calls.length === 0) {
-      return assistantMsg.content ?? "🤔";
-    }
-
-    // Add assistant message with tool calls to context
-    chatMessages.push(assistantMsg);
-
-    // Execute each tool call
-    for (const toolCall of assistantMsg.tool_calls) {
-      if (toolCall.type !== "function") continue;
-
-      const args = JSON.parse(toolCall.function.arguments) as Record<string, unknown>;
-
-      console.log(`[ai] Tool call: ${toolCall.function.name}(${JSON.stringify(args)})`);
-
-      const result = await handleToolCall(toolCall.function.name, args, {
-        tenantId: ctx.tenantId,
-        whatsappNumber: ctx.whatsappNumber,
-        conversationId: ctx.conversationId,
+  // Try with tools first, fall back to simple chat if tools fail
+  try {
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      const completion = await getOpenAI().chat.completions.create({
+        model: MODEL,
+        messages: chatMessages,
+        tools: aiTools,
+        tool_choice: "auto",
       });
 
-      chatMessages.push({
-        role: "tool",
-        tool_call_id: toolCall.id,
-        content: JSON.stringify(result),
+      const choice = completion.choices[0];
+      if (!choice?.message) {
+        return "Disculpá, no pude procesar tu mensaje. ¿Podés repetirlo?";
+      }
+
+      const assistantMsg = choice.message;
+
+      // If no tool calls, return the text response
+      if (!assistantMsg.tool_calls || assistantMsg.tool_calls.length === 0) {
+        return assistantMsg.content ?? "🤔";
+      }
+
+      // Add assistant message with tool calls to context
+      chatMessages.push(assistantMsg);
+
+      // Execute each tool call
+      for (const toolCall of assistantMsg.tool_calls) {
+        if (toolCall.type !== "function") continue;
+
+        const args = JSON.parse(toolCall.function.arguments) as Record<string, unknown>;
+
+        console.log(`[ai] Tool call: ${toolCall.function.name}(${JSON.stringify(args)})`);
+
+        const result = await handleToolCall(toolCall.function.name, args, {
+          tenantId: ctx.tenantId,
+          whatsappNumber: ctx.whatsappNumber,
+          conversationId: ctx.conversationId,
+        });
+
+        chatMessages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(result),
+        });
+      }
+    }
+
+    return "Disculpá, tardé demasiado procesando. ¿Podés simplificar tu consulta?";
+  } catch (toolError) {
+    // If tool-based call fails (e.g., model doesn't support tools), retry without tools
+    console.warn(`[ai] Tool-based call failed, retrying without tools:`, toolError instanceof Error ? toolError.message : toolError);
+
+    try {
+      const fallbackCompletion = await getOpenAI().chat.completions.create({
+        model: MODEL,
+        messages: chatMessages,
       });
+
+      const fallbackContent = fallbackCompletion.choices[0]?.message?.content;
+      return fallbackContent ?? "🤔";
+    } catch (fallbackError) {
+      console.error(`[ai] Fallback (no-tools) call also failed:`, fallbackError);
+      return "Disculpá, tuve un problema procesando tu mensaje. ¿Podés intentar de nuevo?";
     }
   }
-
-  return "Disculpá, tardé demasiado procesando. ¿Podés simplificar tu consulta?";
 }
