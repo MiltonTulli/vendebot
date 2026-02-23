@@ -17,20 +17,22 @@ import { handleToolCall } from "./tool-handlers";
 let _openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
   if (!_openai) {
-    // Support Google Gemini via OpenAI-compatible endpoint
-    if (process.env.GOOGLE_AI_API_KEY) {
+    // Prefer OpenAI if available, fall back to Gemini
+    if (process.env.OPENAI_API_KEY) {
+      _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    } else if (process.env.GOOGLE_AI_API_KEY) {
       _openai = new OpenAI({
         apiKey: process.env.GOOGLE_AI_API_KEY,
         baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
       });
     } else {
-      _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      throw new Error("No AI API key configured. Set OPENAI_API_KEY or GOOGLE_AI_API_KEY.");
     }
   }
   return _openai;
 }
 
-const MODEL = process.env.AI_MODEL ?? (process.env.GOOGLE_AI_API_KEY ? "gemini-2.0-flash" : "gpt-4o-mini");
+const MODEL = process.env.AI_MODEL ?? (process.env.OPENAI_API_KEY ? "gpt-4o-mini" : "gemini-2.0-flash");
 const MAX_CONTEXT_MESSAGES = 20;
 const MAX_TOOL_ROUNDS = 5;
 
