@@ -13,7 +13,9 @@ import {
   ArrowLeft,
   CheckCircle2,
   Upload,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,6 +34,7 @@ const steps = [
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     businessName: "",
     address: "",
@@ -43,6 +46,30 @@ export default function OnboardingPage() {
   });
 
   const progress = ((step + 1) / steps.length) * 100;
+
+  const saveToDb = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Error al guardar");
+        setSaving(false);
+        return false;
+      }
+      return true;
+    } catch {
+      toast.error("Error de conexión");
+      setSaving(false);
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const update = (field: string, value: string) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -282,7 +309,20 @@ export default function OnboardingPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Anterior
           </Button>
-          <Button onClick={() => setStep((s) => Math.min(steps.length - 1, s + 1))}>
+          <Button
+            disabled={saving}
+            onClick={async () => {
+              // Save business info when leaving step 0 or step 3, or activating
+              if (step === 0 || step === 3 || step === 4) {
+                const ok = await saveToDb();
+                if (!ok) return;
+              }
+              setStep((s) => Math.min(steps.length - 1, s + 1));
+            }}
+          >
+            {saving ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : null}
             {step === 4 ? "Activar bot" : "Siguiente"}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

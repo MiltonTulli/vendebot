@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Store,
   ShoppingBag,
@@ -9,6 +9,7 @@ import {
   ExternalLink,
   CheckCircle,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +25,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface IntegrationStatus {
+  tiendanube: { connected: boolean; storeId: string; lastSync: string | null };
+  mercadolibre: { connected: boolean; userId: string; lastSync: string | null };
+  externalDb: { connected: boolean; type: string; lastSync: string | null; config: Record<string, unknown> | null };
+}
+
 export default function IntegrationsPage() {
   const [syncing, setSyncing] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState<IntegrationStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/integrations/status");
+      if (res.ok) setStatus(await res.json());
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadStatus(); }, [loadStatus]);
 
   const handleSync = async (provider: string) => {
     setSyncing(provider);
@@ -65,6 +84,9 @@ export default function IntegrationsPage() {
           <CardTitle className="flex items-center gap-2 text-base">
             <Store className="h-5 w-5 text-blue-500" />
             Tiendanube
+            {status?.tiendanube.connected && (
+              <Badge className="bg-green-100 text-green-700 ml-2"><CheckCircle className="mr-1 h-3 w-3" />Conectado</Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -106,6 +128,9 @@ export default function IntegrationsPage() {
           <CardTitle className="flex items-center gap-2 text-base">
             <ShoppingBag className="h-5 w-5 text-yellow-500" />
             MercadoLibre
+            {status?.mercadolibre.connected && (
+              <Badge className="bg-green-100 text-green-700 ml-2"><CheckCircle className="mr-1 h-3 w-3" />Conectado</Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -143,6 +168,9 @@ export default function IntegrationsPage() {
           <CardTitle className="flex items-center gap-2 text-base">
             <Database className="h-5 w-5 text-green-500" />
             Base de datos externa
+            {status?.externalDb.connected && (
+              <Badge className="bg-green-100 text-green-700 ml-2"><CheckCircle className="mr-1 h-3 w-3" />Conectado ({status.externalDb.type})</Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
