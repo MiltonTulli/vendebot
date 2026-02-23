@@ -62,16 +62,16 @@
 - [x] Settings: business info, bot personality, hours, notifications (2026-02-22)
 
 ## Phase 5 — Owner Management Channel
-- [ ] Dedicated WhatsApp channel for owner ↔ bot communication
-- [ ] Natural language commands:
+- [x] Dedicated WhatsApp channel for owner ↔ bot communication (2026-02-22)
+- [x] Natural language commands: (2026-02-22)
   - Update prices: "El tomate ahora sale $2500/kg"
   - Change hours: "Hoy cerramos a las 15"
   - Add product: "Agregá empanadas de humita a $800"
   - Remove product: "Sacá el sushi especial del menú"
   - Check sales: "¿Cuánto vendí hoy?"
   - Broadcast: "Avisale a los que preguntaron por X que ya llegó"
-- [ ] Confirmation for each action: "✅ Actualizado: tomate → $2.500/kg"
-- [ ] Change log in dashboard
+- [x] Confirmation for each action: "✅ Actualizado: tomate → $2.500/kg" (2026-02-22)
+- [x] Change log in dashboard (2026-02-22)
 
 ## Phase 6 — Payments (MercadoPago)
 - [ ] MercadoPago OAuth integration
