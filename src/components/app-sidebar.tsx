@@ -11,6 +11,10 @@ import {
   History,
   FileText,
   Plug,
+  Megaphone,
+  BarChart3,
+  Globe,
+  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,8 +39,12 @@ const navItems = [
   { title: "Conversaciones", href: "/app/conversations", icon: MessageSquare },
   { title: "Clientes", href: "/app/customers", icon: Users },
   { title: "Facturas", href: "/app/invoices", icon: FileText },
+  { title: "Campañas", href: "/app/campaigns", icon: Megaphone },
+  { title: "Analytics", href: "/app/analytics", icon: BarChart3 },
+  { title: "Landing Pages", href: "/app/seo", icon: Globe },
   { title: "Registro de cambios", href: "/app/change-log", icon: History },
   { title: "Integraciones", href: "/app/settings/integrations", icon: Plug },
+  { title: "Facturación", href: "/app/billing", icon: CreditCard },
   { title: "Configuración", href: "/app/settings", icon: Settings },
 ];
 

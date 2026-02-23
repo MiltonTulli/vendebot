@@ -218,6 +218,118 @@ export const orderTrackingTokens = pgTable("order_tracking_tokens", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Campaign status enum
+export const campaignStatusEnum = pgEnum("campaign_status", [
+  "draft",
+  "pending_approval",
+  "approved",
+  "rejected",
+  "sending",
+  "sent",
+  "failed",
+]);
+
+// Broadcast Campaigns
+export const campaigns = pgTable("campaigns", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id")
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  templateName: text("template_name").notNull(),
+  templateLanguage: text("template_language").notNull().default("es_AR"),
+  templateCategory: text("template_category").notNull().default("MARKETING"), // MARKETING | UTILITY
+  templateBody: text("template_body").notNull(),
+  templateParams: jsonb("template_params").$type<string[]>(),
+  status: campaignStatusEnum("status").notNull().default("draft"),
+  metaTemplateId: text("meta_template_id"),
+  rejectionReason: text("rejection_reason"),
+  recipientFilter: jsonb("recipient_filter").$type<{
+    tags?: string[];
+    lastOrderDays?: number;
+    all?: boolean;
+  }>(),
+  totalRecipients: integer("total_recipients").default(0),
+  sentCount: integer("sent_count").default(0),
+  deliveredCount: integer("delivered_count").default(0),
+  readCount: integer("read_count").default(0),
+  scheduledAt: timestamp("scheduled_at"),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Campaign Recipients
+export const campaignRecipients = pgTable("campaign_recipients", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  campaignId: uuid("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  customerId: uuid("customer_id")
+    .notNull()
+    .references(() => customers.id),
+  whatsappNumber: text("whatsapp_number").notNull(),
+  status: text("status").notNull().default("pending"), // pending | sent | delivered | read | failed
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at"),
+  readAt: timestamp("read_at"),
+  errorMessage: text("error_message"),
+});
+
+// SEO Landing Pages
+export const seoPages = pgTable("seo_pages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id")
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description"),
+  heroImage: text("hero_image"),
+  content: jsonb("content").$type<{
+    sections?: Array<{
+      type: "text" | "features" | "testimonials" | "cta";
+      data: Record<string, unknown>;
+    }>;
+  }>(),
+  showCatalog: boolean("show_catalog").notNull().default(true),
+  showWhatsappButton: boolean("show_whatsapp_button").notNull().default(true),
+  customCss: text("custom_css"),
+  published: boolean("published").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Billing / Subscriptions
+export const subscriptionPlanEnum = pgEnum("subscription_plan", [
+  "starter",
+  "pro",
+  "business",
+]);
+
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "pending",
+  "authorized",
+  "paused",
+  "cancelled",
+]);
+
+export const subscriptions = pgTable("subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id")
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  plan: subscriptionPlanEnum("plan").notNull(),
+  status: subscriptionStatusEnum("status").notNull().default("pending"),
+  mpPreapprovalId: text("mp_preapproval_id"),
+  mpPayerId: text("mp_payer_id"),
+  priceArs: integer("price_ars").notNull(),
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Invoices
 export const invoices = pgTable("invoices", {
   id: uuid("id").primaryKey().defaultRandom(),
